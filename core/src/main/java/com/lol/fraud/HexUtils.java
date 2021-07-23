@@ -76,7 +76,15 @@ public class HexUtils {
         double angle = 2.0 * Math.PI * (orientation.start_angle - corner) / 6.0;
         return new Vector2(size.x * (float)Math.cos(angle), size.y * (float)Math.sin(angle));
     }
-    public FractionalHexTile pixel_to_hex(Vector2 p) {
+    public HexTile pixelToHex(Vector2 p) {
+        Vector2 pt = new Vector2(
+                (p.x - origin.x) / size.x,
+                (p.y - origin.y) / size.y);
+        double q = orientation.b0 * pt.x + orientation.b1 * pt.y;
+        double r = orientation.b2 * pt.x + orientation.b3 * pt.y;
+        return new FractionalHexTile(q, r, -q - r).hexRound();
+    }
+    public FractionalHexTile pixelToFractionalHex(Vector2 p) {
             Vector2 pt = new Vector2(
                     (p.x - origin.x) / size.x,
                     (p.y - origin.y) / size.y);
@@ -85,7 +93,7 @@ public class HexUtils {
             return new FractionalHexTile(q, r, -q - r);
     }
     public Vector2 pixelToOffsetHex(Vector2 mouse, int type){
-        return(getOffsetCoordinate(pixel_to_hex(mouse).hexRound(),type));
+        return(getOffsetCoordinate(pixelToHex(mouse),type));
     }
     public ArrayList<HexTile> getHexesInRing(HexTile h, int r){
         ArrayList<HexTile> ring = new ArrayList<>();

@@ -63,8 +63,8 @@ public class GDHeX extends ApplicationAdapter {
 		Gdx.gl.glClearColor(0.2f, 0.2f, 0.2f, 1);
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 		batch.setProjectionMatrix(camera.combined);
-		radius = hU.getHexesInRadius(hU.pixel_to_hex(mouse).hexRound(),2);
-		ring = hU.getHexesInRing(hU.pixel_to_hex(mouse).hexRound(),4);
+		radius = hU.getHexesInRadius(hU.pixelToHex(mouse),2);
+		ring = hU.getHexesInRing(hU.pixelToHex(mouse),4);
 		setMouse();
 		batch.begin();
 		for(HexTile h: hU.grid ){
@@ -83,7 +83,7 @@ public class GDHeX extends ApplicationAdapter {
 		}
 		batch.setShader(fontShader);
 		font.getData().setScale(0.5f);
-		layout.setText(font,hU.getOffsetCoordinate(hU.pixel_to_hex(mouse).hexRound(),0).toString());
+		layout.setText(font,hU.getOffsetCoordinate(hU.pixelToHex(mouse),0).toString());
 		fontShader.setSmoothing(1/8f);
 		font.draw(batch,layout,camera.position.x-390,camera.position.y-180);
 		batch.setShader(null);
