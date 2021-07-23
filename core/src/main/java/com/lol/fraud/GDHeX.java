@@ -4,8 +4,11 @@ import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.*;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.graphics.g3d.particles.ParticleSorter;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Polygon;
 import com.badlogic.gdx.math.Vector2;
@@ -23,23 +26,36 @@ public class GDHeX extends ApplicationAdapter {
 	Viewport viewport;
 	HexUtils hU;
 	Vector2 mouse = new Vector2();
+	DistanceFieldShader fontShader;
 	ShapeDrawer sd;
+	Texture fontTex;
+	BitmapFont font;
 	Pixmap whitePixmap;
+	GlyphLayout layout = new GlyphLayout();
+	ArrayList<HexTile> radius = new ArrayList<>();
+	ArrayList<HexTile> ring = new ArrayList<>();
 	@Override
 	public void create() {
 		Gdx.graphics.setUndecorated(true);
 		Gdx.graphics.setWindowedMode(800,450);
 		camera = new OrthographicCamera();
 		camera.setToOrtho(false,800,450);
+		camera.position.x-=100;
+		camera.position.y-=100;
 		viewport = new FitViewport(800,450,camera);
 		viewport.update(Gdx.graphics.getWidth(),Gdx.graphics.getHeight());
 		batch = new SpriteBatch();
 		hU = new HexUtils(HexUtils.pointy,new Vector2(32,32),new Vector2(0,0));
-		hU.generateGrid(100,100);
+		hU.generateGrid(10,10);
 		whitePixmap = new Pixmap(1,1,Pixmap.Format.RGBA8888);
 		whitePixmap.drawPixel(0,0,Color.WHITE.toIntBits());
 		TextureRegion whitePixel = new TextureRegion(new Texture(whitePixmap));
 		sd = new ShapeDrawer(batch,whitePixel);
+		fontShader = new DistanceFieldShader();
+		fontTex = new Texture(Gdx.files.internal("textures/newfont.png"),true);
+		fontTex.setFilter(Texture.TextureFilter.MipMapLinearNearest, Texture.TextureFilter.Linear);
+		font = new BitmapFont(Gdx.files.internal("newfont.fnt"), new TextureRegion(fontTex), false);
+		font.setUseIntegerPositions(false);
 	}
 
 	@Override
@@ -47,10 +63,30 @@ public class GDHeX extends ApplicationAdapter {
 		Gdx.gl.glClearColor(0.2f, 0.2f, 0.2f, 1);
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 		batch.setProjectionMatrix(camera.combined);
+		radius = hU.getHexesInRadius(hU.pixel_to_hex(mouse).hexRound(),2);
+		ring = hU.getHexesInRing(hU.pixel_to_hex(mouse).hexRound(),4);
+		setMouse();
 		batch.begin();
 		for(HexTile h: hU.grid ){
+			sd.setColor(Color.WHITE);
 			sd.filledPolygon(hU.hexToPixel(h).x,hU.hexToPixel(h).y,6,30,30,30*MathUtils.degRad);
 		}
+		for(HexTile h: radius){
+			if(h==null)continue;
+			sd.setColor(Color.FIREBRICK);
+			sd.filledPolygon(hU.hexToPixel(h).x,hU.hexToPixel(h).y,6,30,30,30*MathUtils.degRad);
+		}
+		for(HexTile h: ring){
+			if(h==null)continue;
+			sd.setColor(Color.GOLD);
+			sd.filledPolygon(hU.hexToPixel(h).x,hU.hexToPixel(h).y,6,30,30,30*MathUtils.degRad);
+		}
+		batch.setShader(fontShader);
+		font.getData().setScale(0.5f);
+		layout.setText(font,hU.getOffsetCoordinate(hU.pixel_to_hex(mouse).hexRound(),0).toString());
+		fontShader.setSmoothing(1/8f);
+		font.draw(batch,layout,camera.position.x-390,camera.position.y-180);
+		batch.setShader(null);
 		batch.end();
 		camera.update();
 	}
@@ -62,6 +98,7 @@ public class GDHeX extends ApplicationAdapter {
 	@Override
 	public void dispose() {
 		batch.dispose();
+		whitePixmap.dispose();
 	}
 
 	@Override

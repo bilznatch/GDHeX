@@ -84,6 +84,9 @@ public class HexUtils {
             double r = orientation.b2 * pt.x + orientation.b3 * pt.y;
             return new FractionalHexTile(q, r, -q - r);
     }
+    public Vector2 pixelToOffsetHex(Vector2 mouse, int type){
+        return(getOffsetCoordinate(pixel_to_hex(mouse).hexRound(),type));
+    }
     public ArrayList<HexTile> getHexesInRing(HexTile h, int r){
         ArrayList<HexTile> ring = new ArrayList<>();
         String key;
@@ -93,11 +96,7 @@ public class HexUtils {
                 for(int k=-r;k<=r;k++){
                     c = Math.max(Math.abs(i), Math.max(Math.abs(j), Math.abs(k)));
                     if(c!=r)continue;
-                    int nq = h.q+i;
-                    int nr = h.r+j;
-                    int ns = h.s+k;
-                    key = nq + "," + nr + "," + ns;
-                    ring.add(gridMap.get(key));
+                    ring.add(getTile(h.q+i,h.r+j,h.s+k));
                 }
             }
         }
@@ -110,15 +109,28 @@ public class HexUtils {
             for(int j=-r;j<=r;j++){
                 for(int k=-r;k<=r;k++){
                     if(i==0&&j==0&&k==0)continue;
-                    int nq = h.q+i;
-                    int nr = h.r+j;
-                    int ns = h.s+k;
-                    key = nq + "," + nr + "," + ns;
-                    radius.add(gridMap.get(key));
+                    radius.add(getTile(h.q+i,h.r+j,h.s+k));
                 }
             }
         }
         return radius;
+    }
+    public HexTile getTile(int q, int r, int s){
+        return gridMap.get(q+","+r+","+s);
+    }
+    public Vector2 getOffsetCoordinate(HexTile h, int type){
+        //0 is odd, 1 is even (probably)
+        if(type == 0){
+            int col = h.q + (h.r - (h.r&1)) / 2;
+            int row = h.r;
+            return new Vector2(col,row);
+        }else if(type==1){
+            int col = h.q + (h.r + (h.r&1)) / 2;
+            int row = h.r;
+            return new Vector2(col,row);
+        }else{
+            return new Vector2(0,0);
+        }
     }
 }
 class Orientation {
