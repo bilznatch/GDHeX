@@ -7,14 +7,15 @@ public class HexUtils {
     public final Orientation orientation;
     public final Vector2 size;
     public final Vector2 origin;
-    static Orientation pointy = new Orientation(
+    enum TYPE {EVENR,ODDR,EVENQ,ODDQ}
+    static final Orientation pointy = new Orientation(
             (float)Math.sqrt(3.0),
             (float)Math.sqrt(3.0) / 2.0f,
             0.0f, 3.0f / 2.0f,
             (float)Math.sqrt(3.0) / 3.0f,
             -1.0f / 3.0f, 0.0f,
             2.0f / 3.0f, 0.5f);
-    static Orientation flat = new Orientation(
+    static final Orientation flat = new Orientation(
             3.0f / 2.0f,
             0.0f,
             (float)Math.sqrt(3.0) / 2.0f,
@@ -92,7 +93,7 @@ public class HexUtils {
             double r = orientation.b2 * pt.x + orientation.b3 * pt.y;
             return new FractionalHexTile(q, r, -q - r);
     }
-    public Vector2 pixelToOffsetHex(Vector2 mouse, int type){
+    public Vector2 pixelToOffsetHex(Vector2 mouse, TYPE type){
         return(getOffsetCoordinate(pixelToHex(mouse),type));
     }
     public ArrayList<HexTile> getHexesInRing(HexTile h, int r){
@@ -126,13 +127,21 @@ public class HexUtils {
     public HexTile getTile(int q, int r, int s){
         return gridMap.get(q+","+r+","+s);
     }
-    public Vector2 getOffsetCoordinate(HexTile h, int type){
+    public Vector2 getOffsetCoordinate(HexTile h, TYPE type){
         //0 is odd, 1 is even (probably)
-        if(type == 0){
+        if(type == TYPE.ODDR){
             int col = h.q + (h.r - (h.r&1)) / 2;
             int row = h.r;
             return new Vector2(col,row);
-        }else if(type==1){
+        }else if(type==TYPE.EVENR){
+            int col = h.q + (h.r + (h.r&1)) / 2;
+            int row = h.r;
+            return new Vector2(col,row);
+        }else if(type==TYPE.ODDQ){
+            int col = h.q + (h.r + (h.r&1)) / 2;
+            int row = h.r;
+            return new Vector2(col,row);
+        }else if(type==TYPE.EVENQ){
             int col = h.q + (h.r + (h.r&1)) / 2;
             int row = h.r;
             return new Vector2(col,row);

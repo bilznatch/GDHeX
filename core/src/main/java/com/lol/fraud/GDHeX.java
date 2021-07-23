@@ -3,6 +3,7 @@ package com.lol.fraud;
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
+import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.graphics.*;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
@@ -20,7 +21,7 @@ import space.earlygrey.shapedrawer.ShapeDrawer;
 import java.util.ArrayList;
 
 /** {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms. */
-public class GDHeX extends ApplicationAdapter {
+public class GDHeX extends ApplicationAdapter implements InputProcessor {
 	SpriteBatch batch;
 	OrthographicCamera camera;
 	Viewport viewport;
@@ -36,6 +37,7 @@ public class GDHeX extends ApplicationAdapter {
 	ArrayList<HexTile> ring = new ArrayList<>();
 	@Override
 	public void create() {
+		Gdx.input.setInputProcessor(this);
 		Gdx.graphics.setUndecorated(true);
 		Gdx.graphics.setWindowedMode(800,450);
 		camera = new OrthographicCamera();
@@ -83,7 +85,7 @@ public class GDHeX extends ApplicationAdapter {
 		}
 		batch.setShader(fontShader);
 		font.getData().setScale(0.5f);
-		layout.setText(font,hU.getOffsetCoordinate(hU.pixelToHex(mouse),0).toString());
+		layout.setText(font,hU.getOffsetCoordinate(hU.pixelToHex(mouse), HexUtils.TYPE.ODDR).toString());
 		fontShader.setSmoothing(1/8f);
 		font.draw(batch,layout,camera.position.x-390,camera.position.y-180);
 		batch.setShader(null);
@@ -106,5 +108,50 @@ public class GDHeX extends ApplicationAdapter {
 		super.resize(width, height);
 		viewport.update(width,height);
 		sd.update();
+	}
+
+	@Override
+	public boolean keyDown(int keycode) {
+		return false;
+	}
+
+	@Override
+	public boolean keyUp(int keycode) {
+		return false;
+	}
+
+	@Override
+	public boolean keyTyped(char character) {
+		return false;
+	}
+
+	@Override
+	public boolean touchDown(int screenX, int screenY, int pointer, int button) {
+		return false;
+	}
+
+	@Override
+	public boolean touchUp(int screenX, int screenY, int pointer, int button) {
+		return false;
+	}
+
+	@Override
+	public boolean touchDragged(int screenX, int screenY, int pointer) {
+		return false;
+	}
+
+	@Override
+	public boolean mouseMoved(int screenX, int screenY) {
+		return false;
+	}
+
+	@Override
+	public boolean scrolled(float amountX, float amountY) {
+		if(amountY > 0){
+			camera.zoom+=0.5f;
+		}else if(amountY<0){
+			camera.zoom-=0.5f;
+		}
+		return false;
 	}
 }
