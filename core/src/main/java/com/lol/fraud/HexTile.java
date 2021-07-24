@@ -3,6 +3,16 @@ package com.lol.fraud;
 import java.util.ArrayList;
 
 public class HexTile {
+    /*_________________________________________________________________________________________
+     *
+     * Before editing this object, consider extending it instead.
+     * If you want to add an ID, textures, give it a sprite, etc.,
+     * I really recommend making a separate class to reduce clutter.
+     * If you need to add a directly hex-related function, please request it be added to the github repo.
+     * This allows everyone to get the benefit from whatever work is put in.
+     *
+     __________________________________________________________________________________________*/
+    static final int NW=2,NE=1,W=3,E=0,SW=4,SE=5;
     int q, r, s;
     float y;
     HexTile(int q, int r, int s) {
@@ -69,7 +79,6 @@ public class HexTile {
     public HexTile diagonalNeighbor(int direction) {
         return add(HexTile.diagonals.get(direction));
     }
-
 
     public int length() {
         return (int)((Math.abs(q) + Math.abs(r) + Math.abs(s)) / 2);

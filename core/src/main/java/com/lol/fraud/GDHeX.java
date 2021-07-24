@@ -48,7 +48,8 @@ public class GDHeX extends ApplicationAdapter implements InputProcessor {
 		viewport.update(Gdx.graphics.getWidth(),Gdx.graphics.getHeight());
 		batch = new SpriteBatch();
 		hU = new HexUtils(HexUtils.pointy,new Vector2(32,32),new Vector2(0,0));
-		hU.generateRectangularGrid(10,10, HexUtils.TYPE.EVENR);
+		//hU.generateRectangularGrid(10,10, HexUtils.TYPE.EVENR);
+		hU.generateTriangularGrid(10,false);
 		whitePixmap = new Pixmap(1,1,Pixmap.Format.RGBA8888);
 		whitePixmap.drawPixel(0,0,Color.WHITE.toIntBits());
 		TextureRegion whitePixel = new TextureRegion(new Texture(whitePixmap));
@@ -91,6 +92,21 @@ public class GDHeX extends ApplicationAdapter implements InputProcessor {
 		batch.setShader(null);
 		batch.end();
 		camera.update();
+		if(Gdx.input.isKeyJustPressed(Input.Keys.NUM_1)){
+			hU.generateRhomboidGrid(10,10,false);
+		}else if(Gdx.input.isKeyJustPressed(Input.Keys.NUM_2)){
+			hU.generateRhomboidGrid(10,10,true);
+		}else if(Gdx.input.isKeyJustPressed(Input.Keys.NUM_3)){
+			hU.generateRectangularGrid(10,10, HexUtils.TYPE.EVENR);
+		}else if(Gdx.input.isKeyJustPressed(Input.Keys.NUM_4)){
+			hU.generateRectangularGrid(10,10, HexUtils.TYPE.ODDR);
+		}else if(Gdx.input.isKeyJustPressed(Input.Keys.NUM_5)){
+			hU.generateTriangularGrid(10,false);
+		}else if(Gdx.input.isKeyJustPressed(Input.Keys.NUM_6)){
+			hU.generateTriangularGrid(10,true);
+		}else if(Gdx.input.isKeyJustPressed(Input.Keys.NUM_7)){
+			hU.generateHexagonalGrid(10);
+		}
 	}
 	public void setMouse(){
 		mouse.set(Gdx.input.getX(),Gdx.input.getY());

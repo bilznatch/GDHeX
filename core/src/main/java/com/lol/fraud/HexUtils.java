@@ -37,14 +37,17 @@ public class HexUtils {
         this.orientation = orientation;
         if(stretch==STRETCH.VERTICAL){
             this.size = size.set((float)Math.sqrt(Math.pow(size.x/Math.sqrt(3),2) + Math.pow(size.x,2)),size.y);
-        }else{
+        }else if(stretch==STRETCH.HORIZONTAL){
             this.size = size.set(size.x,(float)Math.sqrt(Math.pow(size.y/Math.sqrt(3),2) + Math.pow(size.y,2)));
+        }else{
+            throw new IllegalArgumentException("Stretch type is invalid.");
         }
         this.origin = origin;
     }
     public void generateRectangularGrid(int w, int h, TYPE type){
+        clearGrid();
         //Column (q) based types to be added... at some point perhaps.
-        if(type == TYPE.EVENR){
+        if(type == TYPE.ODDR){
             for (int r = 0; r < h; r++) {
                 int r_offset = (int)Math.floor(r/2f); // or r>>1
                 for (int q = -r_offset; q < w - r_offset; q++) {
@@ -55,7 +58,7 @@ public class HexUtils {
                     gridMap.put(pos,hex);
                 }
             }
-        }else if(type == TYPE.ODDR){
+        }else if(type == TYPE.EVENR){
             for (int r = 0; r < h; r++) {
                 int offset = (int)Math.floor(r/2f); // or r>>1
                 for (int s= - offset; s < w - offset; s++) {
@@ -67,13 +70,72 @@ public class HexUtils {
                 }
             }
         }
-
-        //Sort back to front so normal iterating gives us proper y-sorting for rendering
-        Collections.sort( grid, new Comparator<HexTile>() {
-            public int compare (HexTile h1, HexTile h2) {
-                return (int)(h2.y - h1.y);
+        zSortGrid();
+    }
+    public void generateHexagonalGrid(int radius){
+        clearGrid();
+        for (int q = -radius; q <= radius; q++) {
+            int r1 = Math.max(-radius, -q - radius);
+            int r2 = Math.min(radius, -q + radius);
+            for (int r = r1; r <= r2; r++) {
+                HexTile hex = new HexTile(q, r, -q-r);
+                String pos = hex.q + "," + hex.r + "," + hex.s;
+                hex.y = hexToPixel(hex).y;
+                grid.add(hex);
+                gridMap.put(pos,hex);
             }
-        });
+        }
+        zSortGrid();
+    }
+    public void generateTriangularGrid(int maxwidth, boolean flipy) {
+        clearGrid();
+        if (flipy) {
+            for (int q = 0; q <= maxwidth; q++) {
+                for (int r = maxwidth - q; r <= maxwidth; r++) {
+                    HexTile hex = new HexTile(q, r, -q - r);
+                    String pos = hex.q + "," + hex.r + "," + hex.s;
+                    hex.y = hexToPixel(hex).y;
+                    grid.add(hex);
+                    gridMap.put(pos, hex);
+                }
+            }
+        } else {
+            for (int q = 0; q <= maxwidth; q++) {
+                for (int r = 0; r <= maxwidth - q; r++) {
+                    HexTile hex = new HexTile(q, r, -q - r);
+                    String pos = hex.q + "," + hex.r + "," + hex.s;
+                    hex.y = hexToPixel(hex).y;
+                    grid.add(hex);
+                    gridMap.put(pos, hex);
+                }
+            }
+        }
+        zSortGrid();
+    }
+    public void generateRhomboidGrid(int w, int h, boolean reverseSkew){
+        clearGrid();
+        if(reverseSkew){
+            for (int s = 0; s < h; s++) {
+                for (int r = 0; r < w; r++) {
+                    HexTile hex = new HexTile(-r-s+w, r, s-w);
+                    String pos = hex.q + "," + hex.r + "," + hex.s;
+                    hex.y = hexToPixel(hex).y;
+                    grid.add(hex);
+                    gridMap.put(pos,hex);
+                }
+            }
+        }else{
+            for (int r = 0; r < h; r++) {
+                for (int q = 0; q < w; q++) {
+                    HexTile hex = new HexTile(q, r, -q-r);
+                    String pos = hex.q + "," + hex.r + "," + hex.s;
+                    hex.y = hexToPixel(hex).y;
+                    grid.add(hex);
+                    gridMap.put(pos,hex);
+                }
+            }
+        }
+        zSortGrid();
     }
     public ArrayList<Vector2> polygonCorners(HexTile h) {
         ArrayList<Vector2> corners = new ArrayList<>();
@@ -173,6 +235,18 @@ public class HexUtils {
         }else{
             return new Vector2(0,0);
         }
+    }
+    public void zSortGrid(){
+        //Sort back to front so normal iterating gives us proper y-sorting for rendering
+        Collections.sort( grid, new Comparator<HexTile>() {
+            public int compare (HexTile h1, HexTile h2) {
+                return (int)(h2.y - h1.y);
+            }
+        });
+    }
+    public void clearGrid(){
+        grid.clear();
+        gridMap.clear();
     }
 }
 class Orientation {
