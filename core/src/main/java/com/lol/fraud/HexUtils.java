@@ -35,7 +35,7 @@ public class HexUtils {
     }
     public HexUtils(Orientation orientation, Vector2 size, Vector2 origin, STRETCH stretch){
         this.orientation = orientation;
-        if(stretch==STRETCH.HORIZONTAL){
+        if(stretch==STRETCH.VERTICAL){
             this.size = size.set((float)Math.sqrt(Math.pow(size.x/Math.sqrt(3),2) + Math.pow(size.x,2)),size.y);
         }else{
             this.size = size.set(size.x,(float)Math.sqrt(Math.pow(size.y/Math.sqrt(3),2) + Math.pow(size.y,2)));
