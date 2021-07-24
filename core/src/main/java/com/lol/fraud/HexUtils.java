@@ -8,6 +8,7 @@ public class HexUtils {
     public final Vector2 size;
     public final Vector2 origin;
     enum TYPE {EVENR,ODDR,EVENQ,ODDQ}
+    enum STRETCH {HORIZONTAL,VERTICAL}
     static final Orientation pointy = new Orientation(
             (float)Math.sqrt(3.0),
             (float)Math.sqrt(3.0) / 2.0f,
@@ -32,17 +33,41 @@ public class HexUtils {
             this.size = size;
             this.origin = origin;
     }
-    public void generateGrid(int w, int h){
-        for (int r = 0; r < h; r++) {
-            int r_offset = (int)Math.floor(r/2f); // or r>>1
-            for (int q = -r_offset; q < w - r_offset; q++) {
-                HexTile hex = new HexTile(q, r, -q-r);
-                String pos = hex.q + "," + hex.r + "," + hex.s;
-                hex.y = hexToPixel(hex).y;
-                grid.add(hex);
-                gridMap.put(pos,hex);
+    public HexUtils(Orientation orientation, Vector2 size, Vector2 origin, STRETCH stretch){
+        this.orientation = orientation;
+        if(stretch==STRETCH.HORIZONTAL){
+            this.size = size.set((float)Math.sqrt(Math.pow(size.x/Math.sqrt(3),2) + Math.pow(size.x,2)),size.y);
+        }else{
+            this.size = size.set(size.x,(float)Math.sqrt(Math.pow(size.y/Math.sqrt(3),2) + Math.pow(size.y,2)));
+        }
+        this.origin = origin;
+    }
+    public void generateRectangularGrid(int w, int h, TYPE type){
+        //Column (q) based types to be added... at some point perhaps.
+        if(type == TYPE.EVENR){
+            for (int r = 0; r < h; r++) {
+                int r_offset = (int)Math.floor(r/2f); // or r>>1
+                for (int q = -r_offset; q < w - r_offset; q++) {
+                    HexTile hex = new HexTile(q, r, -q-r);
+                    String pos = hex.q + "," + hex.r + "," + hex.s;
+                    hex.y = hexToPixel(hex).y;
+                    grid.add(hex);
+                    gridMap.put(pos,hex);
+                }
+            }
+        }else if(type == TYPE.ODDR){
+            for (int r = 0; r < h; r++) {
+                int offset = (int)Math.floor(r/2f); // or r>>1
+                for (int s= - offset; s < w - offset; s++) {
+                    HexTile hex = new HexTile(-r-s+w, r, s-w);
+                    String pos = hex.q + "," + hex.r + "," + hex.s;
+                    hex.y = hexToPixel(hex).y;
+                    grid.add(hex);
+                    gridMap.put(pos,hex);
+                }
             }
         }
+
         //Sort back to front so normal iterating gives us proper y-sorting for rendering
         Collections.sort( grid, new Comparator<HexTile>() {
             public int compare (HexTile h1, HexTile h2) {

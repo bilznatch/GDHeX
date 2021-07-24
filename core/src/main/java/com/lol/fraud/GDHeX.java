@@ -48,7 +48,7 @@ public class GDHeX extends ApplicationAdapter implements InputProcessor {
 		viewport.update(Gdx.graphics.getWidth(),Gdx.graphics.getHeight());
 		batch = new SpriteBatch();
 		hU = new HexUtils(HexUtils.pointy,new Vector2(32,32),new Vector2(0,0));
-		hU.generateGrid(10,10);
+		hU.generateRectangularGrid(10,10, HexUtils.TYPE.EVENR);
 		whitePixmap = new Pixmap(1,1,Pixmap.Format.RGBA8888);
 		whitePixmap.drawPixel(0,0,Color.WHITE.toIntBits());
 		TextureRegion whitePixel = new TextureRegion(new Texture(whitePixmap));
