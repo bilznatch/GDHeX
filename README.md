@@ -8,6 +8,14 @@ It will be gaining features as they're requested.
 If a feature is missing that makes sense to have, there are two options.  
 You can either add it yourself and send a PR, or you can make a feature request in issues and I'll add it as soon as I can.
 
+Currently implemented major features:
+- Hexgrid maps in 4 basic shapes: Rectangles, Hexagons, Triangles, and Rhombuses
+- Built in methods to get radiuses and rings in relation to a hextile.
+- Automatic scaling of the grid for "stretched" hexagons (textures with square dimensions like 32x32 instead of mathematically perfect hexagons)
+- Automatic zsorting and culling of hextiles for stress-free rendering. If you want to use the culled version of the grid call HexUtils.getOnScreen(), otherwise you can use getFullGrid().
+- Pixel to Hextile conversion, feed your mouse's position into pixelToHex() and get back a placeholder for the tile at that position. You can also retrieve the actual tile at that position using pixelToGridHex().
+- A* pathfinding (each tile has a weight from 0-100, you can change this behavior if you want).
+
 ### Importing into a project
 Copy the 3 classes HexTile, FractionalHexTile, and HexUtils into your LibGDX project.
 
