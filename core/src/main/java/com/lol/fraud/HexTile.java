@@ -1,5 +1,7 @@
 package com.lol.fraud;
 
+import com.badlogic.gdx.math.Vector2;
+
 import java.util.ArrayList;
 
 public class HexTile {
@@ -13,14 +15,18 @@ public class HexTile {
      *
      __________________________________________________________________________________________*/
     static final int NW=2,NE=1,W=3,E=0,SW=4,SE=5;
-    int q, r, s;
-    float y;
+    int q, r, s, weight = 1;
+    Vector2 pos;
     HexTile(int q, int r, int s) {
         this.q = q;
         this.r = r;
         this.s = s;
         if (q + r + s != 0) throw new IllegalArgumentException("q + r + s must be 0");
     }
+    HexTile(){
+
+    }
+
     public HexTile add(HexTile b) {
         return new HexTile(q + b.q, r + b.r, s + b.s);
     }

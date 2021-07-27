@@ -19,6 +19,7 @@ import com.badlogic.gdx.utils.viewport.Viewport;
 import space.earlygrey.shapedrawer.ShapeDrawer;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 /** {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms. */
 public class GDHeX extends ApplicationAdapter implements InputProcessor {
@@ -35,6 +36,8 @@ public class GDHeX extends ApplicationAdapter implements InputProcessor {
 	GlyphLayout layout = new GlyphLayout();
 	ArrayList<HexTile> radius = new ArrayList<>();
 	ArrayList<HexTile> ring = new ArrayList<>();
+	HashMap<HexTile,HexTile> path = new HashMap<>();
+	HexTile pathHead, pathTail;
 	@Override
 	public void create() {
 		Gdx.input.setInputProcessor(this);
@@ -59,6 +62,7 @@ public class GDHeX extends ApplicationAdapter implements InputProcessor {
 		fontTex.setFilter(Texture.TextureFilter.MipMapLinearNearest, Texture.TextureFilter.Linear);
 		font = new BitmapFont(Gdx.files.internal("newfont.fnt"), new TextureRegion(fontTex), false);
 		font.setUseIntegerPositions(false);
+		hU.setRandomWeights();
 	}
 
 	@Override
@@ -68,30 +72,38 @@ public class GDHeX extends ApplicationAdapter implements InputProcessor {
 		batch.setProjectionMatrix(camera.combined);
 		radius = hU.getHexesInRadius(hU.pixelToHex(mouse),2);
 		ring = hU.getHexesInRing(hU.pixelToHex(mouse),4);
+		camera.update();
 		setMouse();
 		batch.begin();
 		for(HexTile h: hU.grid ){
-			sd.setColor(Color.WHITE);
-			sd.filledPolygon(hU.hexToPixel(h).x,hU.hexToPixel(h).y,6,30,30,30*MathUtils.degRad);
+			sd.setColor(Color.WHITE.cpy().lerp(Color.BLACK,h.weight/20f));
+			sd.filledPolygon(h.pos.x,h.pos.y,6,30,30,30*MathUtils.degRad);
 		}
-		for(HexTile h: radius){
+		/*for(HexTile h: radius){
 			if(h==null)continue;
 			sd.setColor(Color.FIREBRICK);
-			sd.filledPolygon(hU.hexToPixel(h).x,hU.hexToPixel(h).y,6,30,30,30*MathUtils.degRad);
+			sd.filledPolygon(h.pos.x,h.pos.y,6,30,30,30*MathUtils.degRad);
 		}
 		for(HexTile h: ring){
 			if(h==null)continue;
 			sd.setColor(Color.GOLD);
-			sd.filledPolygon(hU.hexToPixel(h).x,hU.hexToPixel(h).y,6,30,30,30*MathUtils.degRad);
+			sd.filledPolygon(h.pos.x,h.pos.y,6,30,30,30*MathUtils.degRad);
+		}*/
+		if(pathHead!=null){
+			HexTile current = pathHead;
+			for(int i = 0; i < path.size();i++){
+				sd.setColor(Color.BLUE);
+				sd.filledPolygon(current.pos.x,current.pos.y,6,30,30,30*MathUtils.degRad);
+				current = path.get(current);
+			}
 		}
 		batch.setShader(fontShader);
 		font.getData().setScale(0.5f);
-		layout.setText(font,hU.getOffsetCoordinate(hU.pixelToHex(mouse), HexUtils.TYPE.ODDR).toString());
+		layout.setText(font,hU.pixelToHex(mouse).q + "," + hU.pixelToHex(mouse).r+ "," + hU.pixelToHex(mouse).s );
 		fontShader.setSmoothing(1/8f);
 		font.draw(batch,layout,camera.position.x-390,camera.position.y-180);
 		batch.setShader(null);
 		batch.end();
-		camera.update();
 		if(Gdx.input.isKeyJustPressed(Input.Keys.NUM_1)){
 			hU.generateRhomboidGrid(10,10,false);
 		}else if(Gdx.input.isKeyJustPressed(Input.Keys.NUM_2)){
@@ -105,7 +117,12 @@ public class GDHeX extends ApplicationAdapter implements InputProcessor {
 		}else if(Gdx.input.isKeyJustPressed(Input.Keys.NUM_6)){
 			hU.generateTriangularGrid(10,true);
 		}else if(Gdx.input.isKeyJustPressed(Input.Keys.NUM_7)){
-			hU.generateHexagonalGrid(10);
+			hU.generateHexagonalGrid(100);
+			System.out.println(hU.gridMap.size());
+		}else if(Gdx.input.isKeyJustPressed(Input.Keys.K)){
+			hU.setRandomWeights();
+		}else if(Gdx.input.isKeyPressed(Input.Keys.J)){
+			pathTail = hU.pixelToGridHex(mouse);
 		}
 	}
 	public void setMouse(){
@@ -143,6 +160,12 @@ public class GDHeX extends ApplicationAdapter implements InputProcessor {
 
 	@Override
 	public boolean touchDown(int screenX, int screenY, int pointer, int button) {
+		pathHead = hU.pixelToGridHex(mouse);
+
+		if(pathHead!=null){
+			if(pathHead.weight > 100)pathHead = null;
+			if(pathTail!=null && pathHead!=null) path = hU.getPath(pathTail,hU.pixelToGridHex(mouse));
+		}
 		return false;
 	}
 
@@ -168,6 +191,8 @@ public class GDHeX extends ApplicationAdapter implements InputProcessor {
 		}else if(amountY<0){
 			camera.zoom-=0.5f;
 		}
+		hU.getOnScreen(camera.position.x,camera.position.y,viewport.getWorldWidth()*camera.zoom,viewport.getWorldHeight()*camera.zoom);
+		camera.update();
 		return false;
 	}
 }

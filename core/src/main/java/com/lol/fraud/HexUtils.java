@@ -1,6 +1,11 @@
 package com.lol.fraud;
 
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.math.Vector3;
+import javafx.util.Pair;
+
 import java.util.*;
 
 public class HexUtils {
@@ -9,6 +14,7 @@ public class HexUtils {
     public final Vector2 origin;
     enum TYPE {EVENR,ODDR,EVENQ,ODDQ}
     enum STRETCH {HORIZONTAL,VERTICAL}
+    enum SHAPE {RECTANGLE, TRIANGLE, HEXAGON, RHOMBUS}
     static final Orientation pointy = new Orientation(
             (float)Math.sqrt(3.0),
             (float)Math.sqrt(3.0) / 2.0f,
@@ -44,6 +50,18 @@ public class HexUtils {
         }
         this.origin = origin;
     }
+    public void generateGrid(int w, int h, SHAPE shape, TYPE type){
+        if(shape==SHAPE.RECTANGLE){
+            generateRectangularGrid(w,h,type);
+        }else if(shape==SHAPE.TRIANGLE){
+            generateTriangularGrid(w,false);
+        }else if(shape==SHAPE.RHOMBUS){
+            generateRhomboidGrid(w,h,false);
+        }else if(shape==SHAPE.HEXAGON){
+            generateHexagonalGrid(w);
+        }
+        getOnScreen(0,0,1920,1080);
+    }
     public void generateRectangularGrid(int w, int h, TYPE type){
         clearGrid();
         //Column (q) based types to be added... at some point perhaps.
@@ -52,10 +70,8 @@ public class HexUtils {
                 int r_offset = (int)Math.floor(r/2f); // or r>>1
                 for (int q = -r_offset; q < w - r_offset; q++) {
                     HexTile hex = new HexTile(q, r, -q-r);
-                    String pos = hex.q + "," + hex.r + "," + hex.s;
-                    hex.y = hexToPixel(hex).y;
-                    grid.add(hex);
-                    gridMap.put(pos,hex);
+                    hex.pos = hexToPixel(hex);
+                    gridMap.put(hex.q+","+hex.r+","+hex.s,hex);
                 }
             }
         }else if(type == TYPE.EVENR){
@@ -63,14 +79,12 @@ public class HexUtils {
                 int offset = (int)Math.floor(r/2f); // or r>>1
                 for (int s= - offset; s < w - offset; s++) {
                     HexTile hex = new HexTile(-r-s+w, r, s-w);
-                    String pos = hex.q + "," + hex.r + "," + hex.s;
-                    hex.y = hexToPixel(hex).y;
-                    grid.add(hex);
-                    gridMap.put(pos,hex);
+                    hex.pos = hexToPixel(hex);
+                    gridMap.put(hex.q+","+hex.r+","+hex.s,hex);
                 }
             }
         }
-        zSortGrid();
+        getOnScreen(0,0,1920,1080);
     }
     public void generateHexagonalGrid(int radius){
         clearGrid();
@@ -79,13 +93,11 @@ public class HexUtils {
             int r2 = Math.min(radius, -q + radius);
             for (int r = r1; r <= r2; r++) {
                 HexTile hex = new HexTile(q, r, -q-r);
-                String pos = hex.q + "," + hex.r + "," + hex.s;
-                hex.y = hexToPixel(hex).y;
-                grid.add(hex);
-                gridMap.put(pos,hex);
+                hex.pos = hexToPixel(hex);
+                gridMap.put(hex.q+","+hex.r+","+hex.s,hex);
             }
         }
-        zSortGrid();
+        getOnScreen(0,0,1920,1080);
     }
     public void generateTriangularGrid(int maxwidth, boolean flipy) {
         clearGrid();
@@ -93,24 +105,20 @@ public class HexUtils {
             for (int q = 0; q <= maxwidth; q++) {
                 for (int r = maxwidth - q; r <= maxwidth; r++) {
                     HexTile hex = new HexTile(q, r, -q - r);
-                    String pos = hex.q + "," + hex.r + "," + hex.s;
-                    hex.y = hexToPixel(hex).y;
-                    grid.add(hex);
-                    gridMap.put(pos, hex);
+                    hex.pos = hexToPixel(hex);
+                    gridMap.put(hex.q+","+hex.r+","+hex.s, hex);
                 }
             }
         } else {
             for (int q = 0; q <= maxwidth; q++) {
                 for (int r = 0; r <= maxwidth - q; r++) {
                     HexTile hex = new HexTile(q, r, -q - r);
-                    String pos = hex.q + "," + hex.r + "," + hex.s;
-                    hex.y = hexToPixel(hex).y;
-                    grid.add(hex);
-                    gridMap.put(pos, hex);
+                    hex.pos = hexToPixel(hex);
+                    gridMap.put(hex.q+","+hex.r+","+hex.s, hex);
                 }
             }
         }
-        zSortGrid();
+        getOnScreen(0,0,1920,1080);
     }
     public void generateRhomboidGrid(int w, int h, boolean reverseSkew){
         clearGrid();
@@ -118,24 +126,20 @@ public class HexUtils {
             for (int s = 0; s < h; s++) {
                 for (int r = 0; r < w; r++) {
                     HexTile hex = new HexTile(-r-s+w, r, s-w);
-                    String pos = hex.q + "," + hex.r + "," + hex.s;
-                    hex.y = hexToPixel(hex).y;
-                    grid.add(hex);
-                    gridMap.put(pos,hex);
+                    hex.pos = hexToPixel(hex);
+                    gridMap.put(hex.q+","+hex.r+","+hex.s,hex);
                 }
             }
         }else{
             for (int r = 0; r < h; r++) {
                 for (int q = 0; q < w; q++) {
                     HexTile hex = new HexTile(q, r, -q-r);
-                    String pos = hex.q + "," + hex.r + "," + hex.s;
-                    hex.y = hexToPixel(hex).y;
-                    grid.add(hex);
-                    gridMap.put(pos,hex);
+                    hex.pos = hexToPixel(hex);
+                    gridMap.put(hex.q+","+hex.r+","+hex.s,hex);
                 }
             }
         }
-        zSortGrid();
+        getOnScreen(0,0,1920,1080);
     }
     public ArrayList<Vector2> polygonCorners(HexTile h) {
         ArrayList<Vector2> corners = new ArrayList<>();
@@ -172,6 +176,15 @@ public class HexUtils {
         double r = orientation.b2 * pt.x + orientation.b3 * pt.y;
         return new FractionalHexTile(q, r, -q - r).hexRound();
     }
+    public HexTile pixelToGridHex(Vector2 p) {
+        Vector2 pt = new Vector2(
+                (p.x - origin.x) / size.x,
+                (p.y - origin.y) / size.y);
+        int q = Math.round(orientation.b0 * pt.x + orientation.b1 * pt.y);
+        int r = Math.round(orientation.b2 * pt.x + orientation.b3 * pt.y);
+        int s = -q-r;
+        return getTile(q+","+r+","+s);
+    }
     public FractionalHexTile pixelToFractionalHex(Vector2 p) {
             Vector2 pt = new Vector2(
                     (p.x - origin.x) / size.x,
@@ -185,14 +198,11 @@ public class HexUtils {
     }
     public ArrayList<HexTile> getHexesInRing(HexTile h, int r){
         ArrayList<HexTile> ring = new ArrayList<>();
-        String key;
-        int c = 0;
         for(int i=-r;i<=r;i++){
             for(int j=-r;j<=r;j++){
                 for(int k=-r;k<=r;k++){
-                    c = Math.max(Math.abs(i), Math.max(Math.abs(j), Math.abs(k)));
-                    if(c!=r)continue;
-                    ring.add(getTile(h.q+i,h.r+j,h.s+k));
+                    if(Math.max(Math.abs(i), Math.max(Math.abs(j), Math.abs(k)))!=r)continue;
+                    ring.add(getTile((h.q+i) + "," + (h.r+j) + "," + (h.s+k)));
                 }
             }
         }
@@ -200,19 +210,18 @@ public class HexUtils {
     }
     public ArrayList<HexTile> getHexesInRadius(HexTile h, int r){
         ArrayList<HexTile> radius = new ArrayList<>();
-        String key;
         for(int i=-r;i<=r;i++){
             for(int j=-r;j<=r;j++){
                 for(int k=-r;k<=r;k++){
                     if(i==0&&j==0&&k==0)continue;
-                    radius.add(getTile(h.q+i,h.r+j,h.s+k));
+                    radius.add(getTile((h.q+i) + "," + (h.r+j) + "," + (h.s+k)));
                 }
             }
         }
         return radius;
     }
-    public HexTile getTile(int q, int r, int s){
-        return gridMap.get(q+","+r+","+s);
+    public HexTile getTile(String pos){
+        return gridMap.get(pos);
     }
     public Vector2 getOffsetCoordinate(HexTile h, TYPE type){
         //0 is odd, 1 is even (probably)
@@ -240,13 +249,80 @@ public class HexUtils {
         //Sort back to front so normal iterating gives us proper y-sorting for rendering
         Collections.sort( grid, new Comparator<HexTile>() {
             public int compare (HexTile h1, HexTile h2) {
-                return (int)(h2.y - h1.y);
+                return (int)(h2.pos.y - h1.pos.y);
             }
         });
     }
     public void clearGrid(){
         grid.clear();
         gridMap.clear();
+    }
+    public void getOnScreen(Vector2 cameraPosition, Vector2 screenSize){
+        float x = cameraPosition.x - screenSize.x/2;
+        float y = cameraPosition.y - screenSize.y/2;
+        int count = 0;
+        grid.clear();
+        Vector2 pos = new Vector2();
+        for(float i = x; i < x+screenSize.x+size.x;i+=size.x){
+            for(float j = y; j < y+screenSize.y+size.y;j+=size.y){
+                pos.set(i,j);
+                HexTile h = pixelToGridHex(pos);
+                if(h==null)continue;
+                grid.add(h);
+            }
+        }
+        zSortGrid();
+    }
+    public void getOnScreen(float cameraX, float cameraY, float screenWidth, float screenHeight){
+        float x = cameraX - screenWidth/2;
+        float y = cameraY - screenHeight/2;
+        int count = 0;
+        grid.clear();
+        Vector2 pos = new Vector2();
+        for(float i = x; i < x+screenWidth+2*size.x;i+=size.x*1.5){
+            for(float j = y; j < y+screenHeight+2*size.y;j+=size.y*1.5){
+                pos.set(i,j);
+                HexTile h = pixelToGridHex(pos);
+                if(h==null)continue;
+                grid.add(h);
+            }
+        }
+        zSortGrid();
+    }
+    public HashMap<HexTile,HexTile> getPath(HexTile start, HexTile end){
+        PathfindingQueue<HexTile> frontier = new PathfindingQueue<>();
+        frontier.enqueue(start,0);
+        HashMap<HexTile, HexTile> cameFrom = new HashMap<>();
+        HashMap<HexTile, Integer> costSoFar = new HashMap<>();
+        cameFrom.put(start,start);
+        costSoFar.put(start,0);
+
+        while(frontier.count()>0){
+            HexTile current = frontier.dequeue();
+            if(current.equalHex(end)){
+                break;
+            }
+            for(int i = 0; i < 6;i++){
+                HexTile next = getTile(current.neighbor(i).q+","+current.neighbor(i).r+","+current.neighbor(i).s);
+                if(next==null || next.weight > 100)continue;
+                int newCost = costSoFar.get(current) + next.weight;
+                if (!costSoFar.containsKey(next) || newCost < costSoFar.get(next)) {
+                    costSoFar.put(next,newCost);
+                    int priority = newCost + next.distance(end);
+                    frontier.enqueue(next, priority);
+                    cameFrom.put(next,current);
+                }
+            }
+
+        }
+        return cameFrom;
+    }
+    public void setRandomWeights(){
+        for(Map.Entry<String, HexTile> entry: gridMap.entrySet()){
+            if(MathUtils.random(100)>60){
+                entry.getValue().weight = 1000;
+            }
+        }
     }
 }
 class Orientation {
@@ -270,5 +346,31 @@ class Orientation {
         this.b2 = b2;
         this.b3 = b3;
         this.start_angle = start_angle;
+    }
+}
+class PathfindingQueue<T> {
+    private List<Pair<T, Integer>> elements = new ArrayList<Pair<T, Integer>>();
+
+    public int count(){
+        return elements.size();
+    }
+
+    public void enqueue(T item, int priority){
+        elements.add(new Pair(item, priority));
+    }
+
+    public T dequeue()
+    {
+        int bestIndex = 0;
+
+        for (int i = 0; i < elements.size(); i++) {
+            if (elements.get(i).getValue() < elements.get(bestIndex).getValue()) {
+                bestIndex = i;
+            }
+        }
+
+        T bestItem = elements.get(bestIndex).getKey();
+        elements.remove(bestIndex);
+        return bestItem;
     }
 }
