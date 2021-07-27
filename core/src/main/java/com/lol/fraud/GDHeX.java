@@ -89,7 +89,7 @@ public class GDHeX extends ApplicationAdapter implements InputProcessor {
 			sd.setColor(Color.GOLD);
 			sd.filledPolygon(h.pos.x,h.pos.y,6,30,30,30*MathUtils.degRad);
 		}*/
-		if(pathHead!=null){
+		if(path.get(pathHead)!=null){
 			HexTile current = pathHead;
 			for(int i = 0; i < path.size();i++){
 				sd.setColor(Color.BLUE);
