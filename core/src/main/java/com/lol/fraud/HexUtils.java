@@ -289,6 +289,11 @@ public class HexUtils {
         }
         zSortGrid();
     }
+    public void getFullGrid(){
+        for(Map.Entry<String,HexTile> entry: gridMap.entrySet()){
+            grid.add(entry.getValue());
+        }
+    }
     public HashMap<HexTile,HexTile> getPath(HexTile start, HexTile end){
         PathfindingQueue<HexTile> frontier = new PathfindingQueue<>();
         frontier.enqueue(start,0);
