@@ -118,7 +118,6 @@ public class GDHeX extends ApplicationAdapter implements InputProcessor {
 			hU.generateTriangularGrid(10,true);
 		}else if(Gdx.input.isKeyJustPressed(Input.Keys.NUM_7)){
 			hU.generateHexagonalGrid(100);
-			System.out.println(hU.gridMap.size());
 		}else if(Gdx.input.isKeyJustPressed(Input.Keys.K)){
 			hU.setRandomWeights();
 		}else if(Gdx.input.isKeyPressed(Input.Keys.J)){
