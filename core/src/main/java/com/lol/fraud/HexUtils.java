@@ -324,9 +324,7 @@ public class HexUtils {
     }
     public void setRandomWeights(){
         for(Map.Entry<String, HexTile> entry: gridMap.entrySet()){
-            if(MathUtils.random(100)>60){
-                entry.getValue().weight = 1000;
-            }
+                entry.getValue().weight=MathUtils.random(0,10);
         }
     }
 }

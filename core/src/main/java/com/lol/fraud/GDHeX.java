@@ -38,6 +38,7 @@ public class GDHeX extends ApplicationAdapter implements InputProcessor {
 	ArrayList<HexTile> ring = new ArrayList<>();
 	HashMap<HexTile,HexTile> path = new HashMap<>();
 	HexTile pathHead, pathTail;
+	boolean example = false;
 	@Override
 	public void create() {
 		Gdx.input.setInputProcessor(this);
@@ -67,36 +68,18 @@ public class GDHeX extends ApplicationAdapter implements InputProcessor {
 
 	@Override
 	public void render() {
-		Gdx.gl.glClearColor(0.2f, 0.2f, 0.2f, 1);
+		Gdx.gl.glClearColor(0.24f, 0.2f, 0.3f, 1);
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 		batch.setProjectionMatrix(camera.combined);
-		radius = hU.getHexesInRadius(hU.pixelToHex(mouse),2);
-		ring = hU.getHexesInRing(hU.pixelToHex(mouse),4);
 		camera.update();
 		setMouse();
 		batch.begin();
 		for(HexTile h: hU.grid ){
-			sd.setColor(Color.WHITE.cpy().lerp(Color.BLACK,h.weight/20f));
+			sd.setColor(Color.WHITE.cpy().lerp(Color.BLACK,h.weight/10f));
 			sd.filledPolygon(h.pos.x,h.pos.y,6,30,30,30*MathUtils.degRad);
 		}
-		/*for(HexTile h: radius){
-			if(h==null)continue;
-			sd.setColor(Color.FIREBRICK);
-			sd.filledPolygon(h.pos.x,h.pos.y,6,30,30,30*MathUtils.degRad);
-		}
-		for(HexTile h: ring){
-			if(h==null)continue;
-			sd.setColor(Color.GOLD);
-			sd.filledPolygon(h.pos.x,h.pos.y,6,30,30,30*MathUtils.degRad);
-		}*/
-		if(path.get(pathHead)!=null){
-			HexTile current = pathHead;
-			for(int i = 0; i < path.size();i++){
-				sd.setColor(Color.BLUE);
-				sd.filledPolygon(current.pos.x,current.pos.y,6,30,30,30*MathUtils.degRad);
-				current = path.get(current);
-			}
-		}
+		if(example)drawRingAndRadius();
+		drawPath();
 		batch.setShader(fontShader);
 		font.getData().setScale(0.5f);
 		layout.setText(font,hU.pixelToHex(mouse).q + "," + hU.pixelToHex(mouse).r+ "," + hU.pixelToHex(mouse).s );
@@ -104,25 +87,7 @@ public class GDHeX extends ApplicationAdapter implements InputProcessor {
 		font.draw(batch,layout,camera.position.x-390,camera.position.y-180);
 		batch.setShader(null);
 		batch.end();
-		if(Gdx.input.isKeyJustPressed(Input.Keys.NUM_1)){
-			hU.generateRhomboidGrid(10,10,false);
-		}else if(Gdx.input.isKeyJustPressed(Input.Keys.NUM_2)){
-			hU.generateRhomboidGrid(10,10,true);
-		}else if(Gdx.input.isKeyJustPressed(Input.Keys.NUM_3)){
-			hU.generateRectangularGrid(10,10, HexUtils.TYPE.EVENR);
-		}else if(Gdx.input.isKeyJustPressed(Input.Keys.NUM_4)){
-			hU.generateRectangularGrid(10,10, HexUtils.TYPE.ODDR);
-		}else if(Gdx.input.isKeyJustPressed(Input.Keys.NUM_5)){
-			hU.generateTriangularGrid(10,false);
-		}else if(Gdx.input.isKeyJustPressed(Input.Keys.NUM_6)){
-			hU.generateTriangularGrid(10,true);
-		}else if(Gdx.input.isKeyJustPressed(Input.Keys.NUM_7)){
-			hU.generateHexagonalGrid(100);
-		}else if(Gdx.input.isKeyJustPressed(Input.Keys.K)){
-			hU.setRandomWeights();
-		}else if(Gdx.input.isKeyPressed(Input.Keys.J)){
-			pathTail = hU.pixelToGridHex(mouse);
-		}
+		handleInput();
 	}
 	public void setMouse(){
 		mouse.set(Gdx.input.getX(),Gdx.input.getY());
@@ -154,17 +119,24 @@ public class GDHeX extends ApplicationAdapter implements InputProcessor {
 
 	@Override
 	public boolean keyTyped(char character) {
+		if(character==27)Gdx.app.exit();
 		return false;
 	}
 
 	@Override
 	public boolean touchDown(int screenX, int screenY, int pointer, int button) {
-		pathHead = hU.pixelToGridHex(mouse);
-
-		if(pathHead!=null){
-			if(pathHead.weight > 100)pathHead = null;
-			if(pathTail!=null && pathHead!=null) path = hU.getPath(pathTail,hU.pixelToGridHex(mouse));
+		if(Gdx.input.isKeyPressed(Input.Keys.SHIFT_LEFT)){
+			pathTail = hU.pixelToGridHex(mouse);
+			if(pathTail!=null){
+				if(pathTail.weight>100)pathTail = null;
+			}
+		}else{
+			pathHead = hU.pixelToGridHex(mouse);
+			if(pathHead!=null){
+				if(pathHead.weight > 100)pathHead = null;
+			}
 		}
+		if(pathTail!=null && pathHead!=null) path = hU.getPath(pathTail,pathHead);
 		return false;
 	}
 
@@ -193,5 +165,76 @@ public class GDHeX extends ApplicationAdapter implements InputProcessor {
 		hU.getOnScreen(camera.position.x,camera.position.y,viewport.getWorldWidth()*camera.zoom,viewport.getWorldHeight()*camera.zoom);
 		camera.update();
 		return false;
+	}
+	public void drawRingAndRadius(){
+		radius = hU.getHexesInRadius(hU.pixelToHex(mouse),2);
+		ring = hU.getHexesInRing(hU.pixelToHex(mouse),4);
+		for(HexTile h: radius){
+			if(h==null)continue;
+			sd.setColor(Color.FIREBRICK);
+			sd.filledPolygon(h.pos.x,h.pos.y,6,30,30,30*MathUtils.degRad);
+		}
+		for(HexTile h: ring){
+			if(h==null)continue;
+			sd.setColor(Color.GOLD);
+			sd.filledPolygon(h.pos.x,h.pos.y,6,30,30,30*MathUtils.degRad);
+		}
+	}
+	public void drawPath(){
+		if(path.get(pathHead)!=null){
+			HexTile current = pathHead;
+			for(int i = 0; i < path.size();i++){
+				sd.setColor(Color.CORAL);
+				if(current.equals(pathHead) || current.equals(pathTail))sd.setColor(Color.CYAN);
+				sd.filledPolygon(current.pos.x,current.pos.y,6,30,30,30*MathUtils.degRad);
+				current = path.get(current);
+			}
+		}
+	}
+	public void generateNewRandomPath(){
+		pathHead = null;
+		pathTail = null;
+		float x = camera.position.x;
+		float y = camera.position.y;
+		float w = viewport.getWorldWidth()*camera.zoom;
+		float h = viewport.getWorldHeight()*camera.zoom;
+		while(pathHead==null){
+			pathHead = hU.pixelToGridHex(new Vector2(MathUtils.random(x-w/2,x+w/2),MathUtils.random(y-h/2,y+h/2)));
+			if(pathHead.weight>100)pathHead=null;
+		}
+		while(pathTail==null){
+			pathTail = hU.pixelToGridHex(new Vector2(MathUtils.random(x-w/2,x+w/2),MathUtils.random(y-h/2,y+h/2)));
+			if(pathTail.weight>100)pathTail=null;
+		}
+		path = hU.getPath(pathTail,pathHead);
+	}
+	public void handleInput(){
+		if(Gdx.input.isKeyJustPressed(Input.Keys.NUM_1)){
+			hU.generateRhomboidGrid(10,10,false);
+		}else if(Gdx.input.isKeyJustPressed(Input.Keys.NUM_2)){
+			hU.generateRhomboidGrid(10,10,true);
+		}else if(Gdx.input.isKeyJustPressed(Input.Keys.NUM_3)){
+			hU.generateRectangularGrid(10,10, HexUtils.TYPE.EVENR);
+		}else if(Gdx.input.isKeyJustPressed(Input.Keys.NUM_4)){
+			hU.generateRectangularGrid(10,10, HexUtils.TYPE.ODDR);
+		}else if(Gdx.input.isKeyJustPressed(Input.Keys.NUM_5)){
+			hU.generateTriangularGrid(10,false);
+		}else if(Gdx.input.isKeyJustPressed(Input.Keys.NUM_6)){
+			hU.generateTriangularGrid(10,true);
+		}else if(Gdx.input.isKeyJustPressed(Input.Keys.NUM_7)){
+			hU.generateHexagonalGrid(100);
+		}else if(Gdx.input.isKeyJustPressed(Input.Keys.K)){
+			hU.setRandomWeights();
+		}else if(Gdx.input.isKeyPressed(Input.Keys.L)){
+			hU.pixelToGridHex(mouse).weight = 1000;
+		}else if(Gdx.input.isKeyPressed(Input.Keys.O)){
+			hU.pixelToGridHex(mouse).weight = 0;
+		}else if(Gdx.input.isKeyJustPressed(Input.Keys.NUM_0)){
+			generateNewRandomPath();
+		}else if(Gdx.input.isKeyJustPressed(Input.Keys.NUM_9)){
+			example = !example;
+		}else if(Gdx.input.isKeyJustPressed(Input.Keys.F11)){
+			Gdx.graphics.setFullscreenMode(Gdx.graphics.getDisplayMode());
+		}
 	}
 }
