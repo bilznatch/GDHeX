@@ -80,12 +80,7 @@ public class GDHeX extends ApplicationAdapter implements InputProcessor {
 		}
 		if(example)drawRingAndRadius();
 		drawPath();
-		batch.setShader(fontShader);
-		font.getData().setScale(0.5f);
-		layout.setText(font,hU.pixelToHex(mouse).q + "," + hU.pixelToHex(mouse).r+ "," + hU.pixelToHex(mouse).s );
-		fontShader.setSmoothing(1/8f);
-		font.draw(batch,layout,camera.position.x-390,camera.position.y-180);
-		batch.setShader(null);
+		drawStrings();
 		batch.end();
 		handleInput();
 	}
@@ -190,6 +185,18 @@ public class GDHeX extends ApplicationAdapter implements InputProcessor {
 				current = path.get(current);
 			}
 		}
+	}
+	public void drawStrings(){
+		float xoffset = camera.position.x-(390*camera.zoom);
+		float yoffset = camera.position.y-(180*camera.zoom);
+		font.getData().setScale((float)MathUtils.clamp(0.5f*camera.zoom,0.5,100));
+		layout.setText(font,hU.pixelToHex(mouse).q + "," + hU.pixelToHex(mouse).r+ "," + hU.pixelToHex(mouse).s );
+		sd.setColor(Color.FIREBRICK.cpy().lerp(Color.CLEAR,0.4f));
+		sd.filledRectangle(xoffset-5*camera.zoom,yoffset-layout.height-5*camera.zoom,layout.width+10*camera.zoom,layout.height+10*camera.zoom);
+		batch.setShader(fontShader);
+		fontShader.setSmoothing(1/8f);
+		font.draw(batch,layout,xoffset,yoffset);
+		batch.setShader(null);
 	}
 	public void generateNewRandomPath(){
 		pathHead = null;
