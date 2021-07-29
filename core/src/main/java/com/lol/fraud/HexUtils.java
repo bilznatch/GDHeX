@@ -1,6 +1,9 @@
 package com.lol.fraud;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.maps.MapLayer;
+import com.badlogic.gdx.maps.tiled.TiledMap;
+import com.badlogic.gdx.maps.tiled.TiledMapTileLayer;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
@@ -33,7 +36,10 @@ public class HexUtils {
             0.0f);
     ArrayList<HexTile> grid = new ArrayList<>();
     HashMap<String, HexTile> gridMap = new HashMap<String, HexTile>();
-
+    boolean tiledMapLoaded = false;
+    int maxLayers = 0;
+    float minX = 0, maxX = 0, minY = 0, maxY = 0;
+    Vector2 temp = new Vector2();
     public HexUtils(Orientation orientation, Vector2 size, Vector2 origin){
             this.orientation = orientation;
             this.size = size;
@@ -183,7 +189,16 @@ public class HexUtils {
         int q = Math.round(orientation.b0 * pt.x + orientation.b1 * pt.y);
         int r = Math.round(orientation.b2 * pt.x + orientation.b3 * pt.y);
         int s = -q-r;
-        return getTile(q+","+r+","+s);
+        return getTile(q,r,s);
+    }
+    public THexTile pixelToGridTHex(int l, Vector2 p){
+        Vector2 pt = new Vector2(
+                (p.x - origin.x) / size.x,
+                (p.y - origin.y) / size.y);
+        int q = Math.round(orientation.b0 * pt.x + orientation.b1 * pt.y);
+        int r = Math.round(orientation.b2 * pt.x + orientation.b3 * pt.y);
+        int s = -q-r;
+        return getTile(l,q,r,s);
     }
     public FractionalHexTile pixelToFractionalHex(Vector2 p) {
             Vector2 pt = new Vector2(
@@ -192,6 +207,14 @@ public class HexUtils {
             double q = orientation.b0 * pt.x + orientation.b1 * pt.y;
             double r = orientation.b2 * pt.x + orientation.b3 * pt.y;
             return new FractionalHexTile(q, r, -q - r);
+    }
+    public int[] getIntegerQRSfromXY(float x, float y){
+        x = (x-origin.x)/size.x;
+        y = (y-origin.y)/size.y;
+        int q = Math.round(orientation.b0 * x + orientation.b1 * y);
+        int r = Math.round(orientation.b2 * x + orientation.b3 * y);
+        int s = -q-r;
+        return new int[]{q,r,s};
     }
     public Vector2 pixelToOffsetHex(Vector2 mouse, TYPE type){
         return(getOffsetCoordinate(pixelToHex(mouse),type));
@@ -223,6 +246,12 @@ public class HexUtils {
     public HexTile getTile(String pos){
         return gridMap.get(pos);
     }
+    public HexTile getTile(int q, int r, int s){
+        return gridMap.get(q+","+r+","+s);
+    }
+    public THexTile getTile(int l, int q, int r, int s){
+        return (THexTile) gridMap.get(l+","+q+","+r+","+s);
+    }
     public Vector2 getOffsetCoordinate(HexTile h, TYPE type){
         //0 is odd, 1 is even (probably)
         if(type == TYPE.ODDR){
@@ -245,49 +274,64 @@ public class HexUtils {
             return new Vector2(0,0);
         }
     }
-    public void zSortGrid(){
-        //Sort back to front so normal iterating gives us proper y-sorting for rendering
-        Collections.sort( grid, new Comparator<HexTile>() {
-            public int compare (HexTile h1, HexTile h2) {
-                return (int)(h2.pos.y - h1.pos.y);
-            }
-        });
-    }
     public void clearGrid(){
         grid.clear();
         gridMap.clear();
     }
     public void getOnScreen(Vector2 cameraPosition, Vector2 screenSize){
-        float x = cameraPosition.x - screenSize.x/2;
-        float y = cameraPosition.y - screenSize.y/2;
-        int count = 0;
+        float x = Math.max(cameraPosition.x - screenSize.x/2,minX);
+        float y = Math.max(cameraPosition.y - screenSize.y/2,minY);
         grid.clear();
-        Vector2 pos = new Vector2();
-        for(float i = x; i < x+screenSize.x+size.x;i+=size.x){
-            for(float j = y; j < y+screenSize.y+size.y;j+=size.y){
-                pos.set(i,j);
-                HexTile h = pixelToGridHex(pos);
-                if(h==null)continue;
-                grid.add(h);
+        if(tiledMapLoaded){
+            for(int k = maxLayers; k > 0; k--) {
+                for (float j = y + screenSize.y + size.y; j >= 0; j -= size.y * 1.5f) {
+                    for (float i = x; i < x + screenSize.x + size.x; i += size.x * 1.5f) {
+                        temp.set(i, j);
+                        HexTile h = pixelToGridTHex(k,temp);
+                        if (h == null) continue;
+                        grid.add(h);
+                    }
+                }
+            }
+        }else{
+            for (float j = y + screenSize.y + size.y; j >= 0; j -= size.y * 1.5f) {
+                for (float i = x; i < x + screenSize.x + size.x; i += size.x * 1.5f) {
+                    temp.set(i, j);
+                    HexTile h = pixelToGridHex(temp);
+                    if (h == null) continue;
+                    grid.add(h);
+                }
             }
         }
-        zSortGrid();
     }
     public void getOnScreen(float cameraX, float cameraY, float screenWidth, float screenHeight){
-        float x = cameraX - screenWidth/2;
-        float y = cameraY - screenHeight/2;
-        int count = 0;
+        float x = Math.max(cameraX - screenWidth/2,minX);
+        float y = Math.max(cameraY - screenHeight/2,minY);
+        float endX = Math.min(cameraX + screenWidth/2,maxX);
+        float endY = Math.min(cameraY + screenHeight/2,maxY);
+        if(x-size.x<=minX&&endX+size.x>=maxX&&y-size.y<=minY&&endY+size.y>=maxY&&grid.size()==gridMap.size())return;
         grid.clear();
-        Vector2 pos = new Vector2();
-        for(float i = x; i < x+screenWidth+2*size.x;i+=size.x*1.5){
-            for(float j = y; j < y+screenHeight+2*size.y;j+=size.y*1.5){
-                pos.set(i,j);
-                HexTile h = pixelToGridHex(pos);
-                if(h==null)continue;
-                grid.add(h);
+        if(tiledMapLoaded){
+            for(int k = maxLayers; k >= 0; k--) {
+                for (float j = endY + size.y; j >= y-size.y*3; j -= size.y * 1.2f) {
+                    for (float i = x-size.x; i < endX + size.x; i += size.x * 1.5f) {
+                        temp.set(i, j);
+                        HexTile h = pixelToGridTHex(k,temp);
+                        if (h == null) continue;
+                        grid.add(h);
+                    }
+                }
+            }
+        }else{
+            for (float j = y + screenHeight + size.y; j >= size.y; j -= size.y * 1.5f) {
+                for (float i = x-size.x; i < x + screenWidth + size.x; i += size.x * 1.5f) {
+                    temp.set(i, j);
+                    HexTile h = pixelToGridHex(temp);
+                    if (h == null) continue;
+                    grid.add(h);
+                }
             }
         }
-        zSortGrid();
     }
     public void getFullGrid(){
         for(Map.Entry<String,HexTile> entry: gridMap.entrySet()){
@@ -326,6 +370,92 @@ public class HexUtils {
         for(Map.Entry<String, HexTile> entry: gridMap.entrySet()){
                 entry.getValue().weight=MathUtils.random(0,10);
         }
+    }
+    public void parseTiledMap(TiledMap map){
+        tiledMapLoaded = true;
+        clearGrid();
+        int offset = 0, tilew = 0, tileh = 0, layer = 0;
+        int[] qrs = new int[]{0,0,0};
+        float x = 0, y = 0;
+        boolean staggerAxisX = true, staggerIndexEven = false;
+        String axis = map.getProperties().get("staggeraxis", String.class);
+        if (axis != null) {
+            if (axis.equals("x")) {
+                staggerAxisX = true;
+            } else {
+                staggerAxisX = false;
+            }
+        }
+
+        String index = map.getProperties().get("staggerindex", String.class);
+        if (index != null) {
+            if (index.equals("even")) {
+                staggerIndexEven = true;
+            } else {
+                staggerIndexEven = false;
+            }
+        }
+        tilew = map.getProperties().get("tilewidth", Integer.class);
+        tileh = map.getProperties().get("tileheight", Integer.class);
+
+        for(MapLayer ml: map.getLayers()){
+            if(ml instanceof TiledMapTileLayer){
+                TiledMapTileLayer t = (TiledMapTileLayer)ml;
+                for(int i = 0; i < t.getWidth();i++){
+                    for(int j = 0; j < t.getHeight();j++){
+                        if(t.getCell(i,j)==null)continue;
+                        if(staggerAxisX){
+                            //because we're staggering along X axis, the width remains constant at 0.75x
+                            x = i*(tilew*0.75f);
+                            y = j*tileh;
+                            //stagger even or odd
+                            if(staggerIndexEven){
+                                if(i%2==0){
+                                    y-=tileh/2f;
+                                }
+                            }else{
+                                if((i+1)%2==0){
+                                    y-=tileh/2f;
+                                }
+                            }
+                        }else{
+                            //because we're staggering along Y axis, the height remains constant at 0.75x
+                            x = i*tilew;
+                            y = j*(tileh*0.75f);
+                            //stagger even or odd
+                            if(staggerIndexEven){
+                                if(j%2==0){
+                                    x-=tilew/2f;
+                                }
+                            }else{
+                                if((j+1)%2==0){
+                                    x-=tilew/2f;
+                                }
+                            }
+                        }
+                        //center the tiles.
+                        x-=tilew/2f;
+                        y-=tileh/2f;
+                        if(x < minX)minX=x;
+                        if(x>maxX)maxX=x;
+                        if(y<minY)minY=y;
+                        if(y>maxY)maxY=y;
+                        qrs=getIntegerQRSfromXY(x,y);
+                        THexTile tHex = new THexTile(layer,
+                                t.getCell(i,j).getTile(),
+                                qrs[0],
+                                qrs[1],
+                                qrs[2],
+                                x,
+                                y);
+                        gridMap.put(tHex.getLayer()+","+tHex.q+","+tHex.r+","+tHex.s,tHex);
+                    }
+                }
+                layer++;
+            }
+        }
+        this.maxLayers = layer;
+        getFullGrid();
     }
 }
 class Orientation {

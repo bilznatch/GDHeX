@@ -22,7 +22,6 @@ public class DesktopLauncher {
 		configuration.height = 480;
 		//// This prevents a confusing error that would appear after exiting normally.
 		configuration.forceExit = false;
-		
 		for (int size : new int[] { 128, 64, 32, 16 }) {
 			configuration.addIcon("libgdx" + size + ".png", FileType.Internal);
 		}

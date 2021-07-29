@@ -10,6 +10,8 @@ import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.g3d.particles.ParticleSorter;
+import com.badlogic.gdx.maps.tiled.TiledMap;
+import com.badlogic.gdx.maps.tiled.TmxMapLoader;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Polygon;
 import com.badlogic.gdx.math.Vector2;
@@ -39,6 +41,8 @@ public class GDHeX extends ApplicationAdapter implements InputProcessor {
 	HashMap<HexTile,HexTile> path = new HashMap<>();
 	HexTile pathHead, pathTail;
 	boolean example = false;
+	TiledMap map;
+	float deltaTime = 0;
 	@Override
 	public void create() {
 		Gdx.input.setInputProcessor(this);
@@ -51,7 +55,7 @@ public class GDHeX extends ApplicationAdapter implements InputProcessor {
 		viewport = new FitViewport(800,450,camera);
 		viewport.update(Gdx.graphics.getWidth(),Gdx.graphics.getHeight());
 		batch = new SpriteBatch();
-		hU = new HexUtils(HexUtils.pointy,new Vector2(32,32),new Vector2(0,0));
+		hU = new HexUtils(HexUtils.pointy,new Vector2(16,16),new Vector2(0,0), HexUtils.STRETCH.VERTICAL);
 		//hU.generateRectangularGrid(10,10, HexUtils.TYPE.EVENR);
 		hU.generateTriangularGrid(10,false);
 		whitePixmap = new Pixmap(1,1,Pixmap.Format.RGBA8888);
@@ -64,25 +68,34 @@ public class GDHeX extends ApplicationAdapter implements InputProcessor {
 		font = new BitmapFont(Gdx.files.internal("newfont.fnt"), new TextureRegion(fontTex), false);
 		font.setUseIntegerPositions(false);
 		hU.setRandomWeights();
+		map = new TmxMapLoader().load("map/ScholzMap.tmx");
+		hU.parseTiledMap(map);
 	}
 
 	@Override
 	public void render() {
+		deltaTime = Gdx.graphics.getDeltaTime()*60;
 		Gdx.gl.glClearColor(0.24f, 0.2f, 0.3f, 1);
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-		batch.setProjectionMatrix(camera.combined);
-		camera.update();
 		setMouse();
+		handleInput();
+		camera.update();
+		batch.setProjectionMatrix(camera.combined);
 		batch.begin();
+		THexTile t;
 		for(HexTile h: hU.grid ){
-			sd.setColor(Color.WHITE.cpy().lerp(Color.BLACK,h.weight/10f));
-			sd.filledPolygon(h.pos.x,h.pos.y,6,30,30,30*MathUtils.degRad);
+			if(hU.tiledMapLoaded){
+				 t = (THexTile)h;
+				 batch.draw(t.getTextureRegion(),t.pos.x,t.pos.y);
+			}else{
+				sd.setColor(Color.WHITE.cpy().lerp(Color.BLACK,h.weight/10f));
+				sd.filledPolygon(h.pos.x,h.pos.y,6,15,15,30*MathUtils.degRad);
+			}
 		}
 		if(example)drawRingAndRadius();
 		drawPath();
 		drawStrings();
 		batch.end();
-		handleInput();
 	}
 	public void setMouse(){
 		mouse.set(Gdx.input.getX(),Gdx.input.getY());
@@ -190,7 +203,7 @@ public class GDHeX extends ApplicationAdapter implements InputProcessor {
 		float xoffset = camera.position.x-(390*camera.zoom);
 		float yoffset = camera.position.y-(180*camera.zoom);
 		font.getData().setScale((float)MathUtils.clamp(0.5f*camera.zoom,0.5,100));
-		layout.setText(font,hU.pixelToHex(mouse).q + "," + hU.pixelToHex(mouse).r+ "," + hU.pixelToHex(mouse).s );
+		layout.setText(font, hU.pixelToHex(mouse).q + ","+hU.pixelToHex(mouse).r+","+hU.pixelToHex(mouse).s);
 		sd.setColor(Color.FIREBRICK.cpy().lerp(Color.CLEAR,0.4f));
 		sd.filledRectangle(xoffset-5*camera.zoom,yoffset-layout.height-5*camera.zoom,layout.width+10*camera.zoom,layout.height+10*camera.zoom);
 		batch.setShader(fontShader);
@@ -243,5 +256,21 @@ public class GDHeX extends ApplicationAdapter implements InputProcessor {
 		}else if(Gdx.input.isKeyJustPressed(Input.Keys.F11)){
 			Gdx.graphics.setFullscreenMode(Gdx.graphics.getDisplayMode());
 		}
+		if(Gdx.input.isKeyPressed(Input.Keys.A)||Gdx.input.isKeyPressed(Input.Keys.S)||
+				Gdx.input.isKeyPressed(Input.Keys.D)||Gdx.input.isKeyPressed(Input.Keys.W)){
+			if(Gdx.input.isKeyPressed(Input.Keys.A)){
+				camera.position.x-=10*deltaTime;
+			}else if(Gdx.input.isKeyPressed(Input.Keys.D)){
+				camera.position.x+=10*deltaTime;
+			}
+			if(Gdx.input.isKeyPressed(Input.Keys.S)){
+				camera.position.y-=10*deltaTime;
+			}else if(Gdx.input.isKeyPressed(Input.Keys.W)){
+				camera.position.y+=10*deltaTime;
+			}
+			hU.getOnScreen(camera.position.x,camera.position.y,
+					viewport.getWorldWidth()*camera.zoom, viewport.getWorldHeight()*camera.zoom);
+		}
+
 	}
 }
