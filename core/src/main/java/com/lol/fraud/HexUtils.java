@@ -77,6 +77,7 @@ public class HexUtils {
                 for (int q = -r_offset; q < w - r_offset; q++) {
                     HexTile hex = new HexTile(q, r, -q-r);
                     hex.pos = hexToPixel(hex);
+                    setBounds(hex.pos);
                     gridMap.put(hex.q+","+hex.r+","+hex.s,hex);
                 }
             }
@@ -86,6 +87,7 @@ public class HexUtils {
                 for (int s= - offset; s < w - offset; s++) {
                     HexTile hex = new HexTile(-r-s+w, r, s-w);
                     hex.pos = hexToPixel(hex);
+                    setBounds(hex.pos);
                     gridMap.put(hex.q+","+hex.r+","+hex.s,hex);
                 }
             }
@@ -100,6 +102,7 @@ public class HexUtils {
             for (int r = r1; r <= r2; r++) {
                 HexTile hex = new HexTile(q, r, -q-r);
                 hex.pos = hexToPixel(hex);
+                setBounds(hex.pos);
                 gridMap.put(hex.q+","+hex.r+","+hex.s,hex);
             }
         }
@@ -112,6 +115,7 @@ public class HexUtils {
                 for (int r = maxwidth - q; r <= maxwidth; r++) {
                     HexTile hex = new HexTile(q, r, -q - r);
                     hex.pos = hexToPixel(hex);
+                    setBounds(hex.pos);
                     gridMap.put(hex.q+","+hex.r+","+hex.s, hex);
                 }
             }
@@ -120,6 +124,7 @@ public class HexUtils {
                 for (int r = 0; r <= maxwidth - q; r++) {
                     HexTile hex = new HexTile(q, r, -q - r);
                     hex.pos = hexToPixel(hex);
+                    setBounds(hex.pos);
                     gridMap.put(hex.q+","+hex.r+","+hex.s, hex);
                 }
             }
@@ -133,6 +138,7 @@ public class HexUtils {
                 for (int r = 0; r < w; r++) {
                     HexTile hex = new HexTile(-r-s+w, r, s-w);
                     hex.pos = hexToPixel(hex);
+                    setBounds(hex.pos);
                     gridMap.put(hex.q+","+hex.r+","+hex.s,hex);
                 }
             }
@@ -141,6 +147,7 @@ public class HexUtils {
                 for (int q = 0; q < w; q++) {
                     HexTile hex = new HexTile(q, r, -q-r);
                     hex.pos = hexToPixel(hex);
+                    setBounds(hex.pos);
                     gridMap.put(hex.q+","+hex.r+","+hex.s,hex);
                 }
             }
@@ -323,8 +330,8 @@ public class HexUtils {
                 }
             }
         }else{
-            for (float j = y + screenHeight + size.y; j >= size.y; j -= size.y * 1.5f) {
-                for (float i = x-size.x; i < x + screenWidth + size.x; i += size.x * 1.5f) {
+            for (float j = endY+size.y; j >= y-size.y*2; j -= size.y * 1.5f) {
+                for (float i = x-size.x; i < endX + size.x*2; i += size.x * 1.6f) {
                     temp.set(i, j);
                     HexTile h = pixelToGridHex(temp);
                     if (h == null) continue;
@@ -345,7 +352,6 @@ public class HexUtils {
         HashMap<HexTile, Integer> costSoFar = new HashMap<>();
         cameFrom.put(start,start);
         costSoFar.put(start,0);
-
         while(frontier.count()>0){
             HexTile current = frontier.dequeue();
             if(current.equalHex(end)){
@@ -456,6 +462,12 @@ public class HexUtils {
         }
         this.maxLayers = layer;
         getFullGrid();
+    }
+    public void setBounds(Vector2 pos){
+        if(pos.x>maxX)maxX=pos.x;
+        if(pos.x<minX)minX=pos.x;
+        if(pos.y>maxY)maxY=pos.y;
+        if(pos.y<minY)minY=pos.y;
     }
 }
 class Orientation {

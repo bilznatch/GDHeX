@@ -5,10 +5,7 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.graphics.*;
-import com.badlogic.gdx.graphics.g2d.BitmapFont;
-import com.badlogic.gdx.graphics.g2d.GlyphLayout;
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.graphics.g2d.*;
 import com.badlogic.gdx.graphics.g3d.particles.ParticleSorter;
 import com.badlogic.gdx.maps.tiled.TiledMap;
 import com.badlogic.gdx.maps.tiled.TmxMapLoader;
@@ -25,7 +22,7 @@ import java.util.HashMap;
 
 /** {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms. */
 public class GDHeX extends ApplicationAdapter implements InputProcessor {
-	SpriteBatch batch;
+	PolygonSpriteBatch batch;
 	OrthographicCamera camera;
 	Viewport viewport;
 	HexUtils hU;
@@ -41,7 +38,6 @@ public class GDHeX extends ApplicationAdapter implements InputProcessor {
 	HashMap<HexTile,HexTile> path = new HashMap<>();
 	HexTile pathHead, pathTail;
 	boolean example = false;
-	TiledMap map;
 	float deltaTime = 0;
 	@Override
 	public void create() {
@@ -54,8 +50,8 @@ public class GDHeX extends ApplicationAdapter implements InputProcessor {
 		camera.position.y-=100;
 		viewport = new FitViewport(800,450,camera);
 		viewport.update(Gdx.graphics.getWidth(),Gdx.graphics.getHeight());
-		batch = new SpriteBatch();
-		hU = new HexUtils(HexUtils.pointy,new Vector2(16,16),new Vector2(0,0), HexUtils.STRETCH.VERTICAL);
+		batch = new PolygonSpriteBatch();
+		hU = new HexUtils(HexUtils.pointy,new Vector2(32,32),new Vector2(0,0));
 		//hU.generateRectangularGrid(10,10, HexUtils.TYPE.EVENR);
 		hU.generateTriangularGrid(10,false);
 		whitePixmap = new Pixmap(1,1,Pixmap.Format.RGBA8888);
@@ -68,8 +64,6 @@ public class GDHeX extends ApplicationAdapter implements InputProcessor {
 		font = new BitmapFont(Gdx.files.internal("newfont.fnt"), new TextureRegion(fontTex), false);
 		font.setUseIntegerPositions(false);
 		hU.setRandomWeights();
-		map = new TmxMapLoader().load("map/ScholzMap.tmx");
-		hU.parseTiledMap(map);
 	}
 
 	@Override
@@ -82,15 +76,9 @@ public class GDHeX extends ApplicationAdapter implements InputProcessor {
 		camera.update();
 		batch.setProjectionMatrix(camera.combined);
 		batch.begin();
-		THexTile t;
 		for(HexTile h: hU.grid ){
-			if(hU.tiledMapLoaded){
-				 t = (THexTile)h;
-				 batch.draw(t.getTextureRegion(),t.pos.x,t.pos.y);
-			}else{
 				sd.setColor(Color.WHITE.cpy().lerp(Color.BLACK,h.weight/10f));
-				sd.filledPolygon(h.pos.x,h.pos.y,6,15,15,30*MathUtils.degRad);
-			}
+				sd.filledPolygon(h.pos.x,h.pos.y,6,32,32,30*MathUtils.degRad);
 		}
 		if(example)drawRingAndRadius();
 		drawPath();
@@ -180,12 +168,12 @@ public class GDHeX extends ApplicationAdapter implements InputProcessor {
 		for(HexTile h: radius){
 			if(h==null)continue;
 			sd.setColor(Color.FIREBRICK);
-			sd.filledPolygon(h.pos.x,h.pos.y,6,30,30,30*MathUtils.degRad);
+			sd.filledPolygon(h.pos.x,h.pos.y,6,32,32,30*MathUtils.degRad);
 		}
 		for(HexTile h: ring){
 			if(h==null)continue;
 			sd.setColor(Color.GOLD);
-			sd.filledPolygon(h.pos.x,h.pos.y,6,30,30,30*MathUtils.degRad);
+			sd.filledPolygon(h.pos.x,h.pos.y,6,32,32,30*MathUtils.degRad);
 		}
 	}
 	public void drawPath(){
@@ -194,7 +182,7 @@ public class GDHeX extends ApplicationAdapter implements InputProcessor {
 			for(int i = 0; i < path.size();i++){
 				sd.setColor(Color.CORAL);
 				if(current.equals(pathHead) || current.equals(pathTail))sd.setColor(Color.CYAN);
-				sd.filledPolygon(current.pos.x,current.pos.y,6,30,30,30*MathUtils.degRad);
+				sd.filledPolygon(current.pos.x,current.pos.y,6,32,32,30*MathUtils.degRad);
 				current = path.get(current);
 			}
 		}
@@ -203,7 +191,8 @@ public class GDHeX extends ApplicationAdapter implements InputProcessor {
 		float xoffset = camera.position.x-(390*camera.zoom);
 		float yoffset = camera.position.y-(180*camera.zoom);
 		font.getData().setScale((float)MathUtils.clamp(0.5f*camera.zoom,0.5,100));
-		layout.setText(font, hU.pixelToHex(mouse).q + ","+hU.pixelToHex(mouse).r+","+hU.pixelToHex(mouse).s);
+		//layout.setText(font, hU.pixelToHex(mouse).q + ","+hU.pixelToHex(mouse).r+","+hU.pixelToHex(mouse).s);
+		layout.setText(font, String.valueOf(Gdx.graphics.getFramesPerSecond()));
 		sd.setColor(Color.FIREBRICK.cpy().lerp(Color.CLEAR,0.4f));
 		sd.filledRectangle(xoffset-5*camera.zoom,yoffset-layout.height-5*camera.zoom,layout.width+10*camera.zoom,layout.height+10*camera.zoom);
 		batch.setShader(fontShader);
@@ -269,7 +258,8 @@ public class GDHeX extends ApplicationAdapter implements InputProcessor {
 				camera.position.y+=10*deltaTime;
 			}
 			hU.getOnScreen(camera.position.x,camera.position.y,
-					viewport.getWorldWidth()*camera.zoom, viewport.getWorldHeight()*camera.zoom);
+				viewport.getWorldWidth()*camera.zoom,
+				viewport.getWorldHeight()*camera.zoom);
 		}
 
 	}
