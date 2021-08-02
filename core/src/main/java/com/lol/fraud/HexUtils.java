@@ -154,18 +154,18 @@ public class HexUtils {
         }
         getOnScreen(0,0,1920,1080);
     }
-    public ArrayList<Vector2> polygonCorners(HexTile h) {
-        ArrayList<Vector2> corners = new ArrayList<>();
-        Vector2 center = hexToPixel(h);
-        for (int i = 0; i < 6; i++){
+    public float[] polygonCorners(HexTile h) {
+        float[] corners = new float[12];
+        for (int i = 0; i < 12; i+=2){
             Vector2 offset = hexCornerOffset(i);
-            corners.add(new Vector2(center.x + offset.x, center.y + offset.y));
+            corners[i] = h.pos.x + offset.x;
+            corners[i+1] = h.pos.y + offset.y;
         }
         return corners;
     }
     public float[] polygonLocalCorners(HexTile h) {
         float[] corners = new float[12];
-        for (int i = 0; i < 6; i+=2){
+        for (int i = 0; i < 12; i+=2){
             Vector2 offset = hexCornerOffset(i);
             corners[i] = offset.x;
             corners[i+1] = offset.y;
@@ -178,7 +178,7 @@ public class HexUtils {
         return new Vector2(x + origin.x, y + origin.y);
     }
     public Vector2 hexCornerOffset(int corner) {
-        double angle = 2.0 * Math.PI * (orientation.start_angle - corner) / 6.0;
+        double angle = Math.PI * (orientation.start_angle - corner+0.5f) / 6.0;
         return new Vector2(size.x * (float)Math.cos(angle), size.y * (float)Math.sin(angle));
     }
     public HexTile pixelToHex(Vector2 p) {

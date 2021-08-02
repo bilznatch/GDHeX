@@ -18,6 +18,7 @@ import com.badlogic.gdx.utils.viewport.Viewport;
 import space.earlygrey.shapedrawer.ShapeDrawer;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 
 /** {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms. */
